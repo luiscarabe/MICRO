@@ -1,5 +1,5 @@
 ;**************************************************************************
-; 1st DELIVERABLE - labs1a.asm
+; 1st DELIVERABLE - labs1c.asm
 ; Juan Riera, Luis Carabe
 ;**************************************************************************
 ; DATA SEGMENT DEFINITION
@@ -23,7 +23,7 @@ ASSUME CS: CODE, DS: DATOS, ES: EXTRA, SS: PILA
 ; BEGINNING OF THE MAIN PROCEDURE
 INICIO PROC
 ; INITIALIZE THE SEGMENT REGISTERS
-MOV AX, DATOS
+MOV AX, 0511h
 MOV DS, AX
 MOV AX, PILA
 MOV SS, AX
@@ -32,19 +32,16 @@ MOV ES, AX
 MOV SP, 64 ; LOAD THE STACK POINTER WITH THE HIGHEST VALUE
 ;
 ; PROGRAM START
-MOV AX, 13h ;Loading 13h into AX
-MOV BX, 0BAh ;Loading bah into BX (we need to put a 0 before the number, because if not, the compiler will interpret it as a label)
-MOV CX, 3412h ;Loading 3412h into CX
-MOV DX, CX ;Moving data from the register named by CX to another register, named DX
-MOV AX, 6524h ;We need to use an auxiliar register because we can not store an immediate value in the data segment register
-MOV ES, AX ;Now we move the memory address we want to access into the es register
-MOV AL, [ES:6] ;Loading the content of the memory address 65246h (es with offset 6) into AL
-MOV AH, [ES:7] ;Loading the content of the memory address 65247h (es with offset 7) into AH
-MOV AX, 4000h ;We store the segment start because we can not store an immediate value directly into a segment register
-MOV ES, AX ;Now we move the memory address we want to access into the es register
-MOV [ES:4], CH ;We store the content of CH into the memory address in segment ES offset 4
-MOV AX, [DI] ;The default segment for DI is the one stored in DS
-MOV AX, [BP+8] ;The default segment for BP is the one stored in SS
+MOV BX, 0211h ;; Initialize the registers needed
+MOV DI, 1010h
+
+MOV AL, DS:[1234h] ;; It will access the direction 06344h
+MOV AX, [BX] ;; It will access the direction 07220h = DS*10h + BX and load the content to AX
+
+;;We found out that the address 07220h is part of the memory that is reserved for drivers, in our test,we found 832Bh
+
+MOV [DI], AL ;; It will access DS:2Bh (the value of AL in this moment) to store the content	
+			 ;; of that address memory to DS:DI -> 6120h
 
 ; PROGRAM END
 MOV AX, 4C00H
