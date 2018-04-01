@@ -1,0 +1,7 @@
+all: dec2AS.exe
+
+dec2AS.exe: dec2AS.obj
+    tlink /v dec2AS
+
+dec2AS.obj: dec2AS.asm
+    tasm /zi dec2AS.asm
