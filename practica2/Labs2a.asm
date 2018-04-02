@@ -8,6 +8,9 @@ COUNTER DW 0 ; Reserve memory for the counter, one word (two bytes), set to 0
 dataVECTOR DB 4 dup(?) ;
 prodVECTOR DB 8 dup(0) ; Result of multi
 genMATRIX DB 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,1,1,0,1,1,0,1,1,0,1,1,1 ; Generation MATRIX (array) TRASPUESTA
+input db "Input: ", '$'
+output db "Output: ", '$'
+computation db "Computation: ", 13, 10, "    | P1 | P2 | D1 | P4 | D2 | D3 | D4  ", 13, 10, '$'
 DATOS ENDS			  
 ;**************************************************************************
 ; STACK SEGMENT DEFINITION
