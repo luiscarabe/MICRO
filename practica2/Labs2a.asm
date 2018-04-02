@@ -10,7 +10,13 @@ prodVECTOR DB 8 dup(0) ; Result of multi
 genMATRIX DB 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,1,1,0,1,1,0,1,1,0,1,1,1 ; Generation MATRIX (array) TRASPUESTA
 input db "Input: ", '$'
 output db "Output: ", '$'
-computation db "Computation: ", 13, 10, "    | P1 | P2 | D1 | P4 | D2 | D3 | D4  ", 13, 10, '$'
+computation db "Computation: ", 13, 10, "     | P1 | P2 | D1 | P4 | D2 | D3 | D4  ", 13, 10, "Word | ", '$'
+separator db "  | ", '$'
+p1 db "P1   | ", '$'
+p2 db "P2   |    | ", '$'
+p4 db "P4   |    |    |    | ", '$'
+result db 2 dup(0)
+endline db 13, 10, '$'
 DATOS ENDS			  
 ;**************************************************************************
 ; STACK SEGMENT DEFINITION
@@ -93,6 +99,294 @@ MOV AX, OFFSET prodVECTOR
 ret
 
 MULTMATRIX ENDP
+
+PRINTINRESULT PROC
+
+            MOV CX, 0
+            MOV AH, 2h
+
+print:      MOV DL, [result][CX]
+            ADD DL, 30
+            INT 21h
+            MOV DL, ' '
+            INT 21h
+            INC CX
+            CMP CX, 3
+            JNZ print
+            
+            MOV DL, [result][CX]
+            ADD DL, 30
+            INT 21h 
+            
+            MOV DX, OFFSET endline
+            MOV AH, 9h
+            INT 21h
+
+PRINTINRESULT ENDP
+
+PRINTOUTRESULT PROC
+        
+            MOV CX, 0
+            MOV AH, 2h
+
+            MOV DL, [result][4]
+            ADD DL, 30
+            INT 21h
+            MOV DL, ' '
+            INT 21h
+            MOV DL, [result][5]
+            ADD DL, 30
+            INT 21h
+            MOV DL, ' '
+            INT 21h
+            MOV DL, [result][0]
+            ADD DL, 30
+            INT 21h
+            MOV DL, ' '
+            INT 21h
+            MOV DL, [result][6]
+            ADD DL, 30
+            INT 21h
+            MOV DL, ' '
+            INT 21h
+            MOV DL, [result][1]
+            ADD DL, 30
+            INT 21h
+            MOV DL, ' '
+            INT 21h
+            MOV DL, [result][2]
+            ADD DL, 30
+            INT 21
+            MOV DL, ' '
+            INT 21h
+            MOV DL, [result][3]
+            ADD DL, 30
+            INT 21h
+            
+            
+            MOV DX, OFFSET endline
+            MOV AH, 9h
+            INT 21h
+
+PRINTOUTRESULT ENDP
+
+PRINTSEPARATOR PROC
+
+            MOV AH, 9h
+            MOV DX, OFFSET separator
+            INT 21h
+
+PRINTSEPARATOR ENDP
+
+PRINTP1 PROC
+            MOV AH, 9h
+            MOV DX, OFFSET p1
+            INT 21h
+
+            MOV AH, 2h
+            MOV DL, [result][4]
+            ADD DL, 30
+            INT 21h
+
+            CALL PRINTSEPARATOR
+
+            MOV AH, 2h
+            MOV DL, ' '
+            INT 21h
+
+            CALL PRINTSEPARATOR
+
+            MOV AH, 2h
+            MOV DL, [result][0]
+            ADD DL, 30
+            INT 21h
+
+            CALL PRINTSEPARATOR
+
+            MOV AH, 2h
+            MOV DL, ' '
+            INT 21h
+
+            CALL PRINTSEPARATOR
+
+            MOV AH, 2h
+            MOV DL, [result][1]
+            ADD DL, 30
+            INT 21h 
+            
+            CALL PRINTSEPARATOR
+
+            MOV AH, 2h
+            MOV DL, ' '
+            INT 21h
+
+            CALL PRINTSEPARATOR
+
+            MOV AH, 2h
+            MOV DL, [result][3]
+            INT 21h
+
+
+            MOV DX, OFFSET endline
+            MOV AH, 9h
+            INT 21h
+
+PRINTP1 ENDP
+
+
+PRINTP2 PROC
+
+            MOV AH, 9h
+            MOV DX, OFFSET p2
+            INT 21h
+
+            MOV AH, 2h
+            MOV DL, [result][5]
+            ADD DL, 30
+            INT 21h
+
+            CALL PRINTSEPARATOR
+
+            MOV AH, 2h
+            MOV DL, [result][0]
+            ADD DL, 30
+            INT 21h
+
+            CALL PRINTSEPARATOR
+
+            MOV AH, 2h
+            MOV DL, ' '
+            INT 21h
+
+            CALL PRINTSEPARATOR
+
+            MOV AH, 2h
+            MOV DL, ' '
+            INT 21h 
+            
+            CALL PRINTSEPARATOR
+
+            MOV AH, 2h
+            MOV DL, [result][2]
+            MOV DL, 30
+            INT 21h
+
+            CALL PRINTSEPARATOR
+
+            MOV AH, 2h
+            MOV DL, [result][3]
+            INT 21h
+
+
+            MOV DX, OFFSET endline
+            MOV AH, 9h
+            INT 21h
+
+PRINTP2 ENDP
+
+PRINTP3 PROC
+
+            MOV AH, 9h
+            MOV DX, OFFSET p3
+            INT 21h
+            
+            MOV AH, 2h
+            MOV DL, [result][6]
+            ADD DL, 30
+            INT 21h
+
+            CALL PRINTSEPARATOR
+
+            MOV AH, 2h
+            MOV DL, [result][1]
+            ADD DL, 30
+            INT 21h 
+            
+            CALL PRINTSEPARATOR
+
+            MOV AH, 2h
+            MOV DL, [result][2]
+            MOV DL, 30
+            INT 21h
+
+            CALL PRINTSEPARATOR
+
+            MOV AH, 2h
+            MOV DL, [result][3]
+            INT 21h
+
+
+            MOV DX, OFFSET endline
+            MOV AH, 9h
+            INT 21h
+
+PRINTP3 ENDP
+
+
+PRINT PROC
+	        MOV result, AX:DX ;Guardo a buen recaudo 
+                              ;el contenido de AX:DX
+                            ;ya que voy a necesitarlos ahora
+            MOV AH, 9h ;Preparo la funcion a la que quiero llamar
+            MOV DX, OFFSET input
+            INT 21h
+
+
+            CALL PRINTINRESULT
+
+            MOV AH, 9h ;Preparo la funcion a la que quiero llamar
+            MOV DX, OFFSET output
+            INT 21h
+
+            CALL PRINTOUTRESULT
+
+            MOV AH, 9h
+            MOV DX, OFFSET computation
+            INT 21h
+
+            MOV AH, 2h
+            MOV DL, [result][0]
+            ADD DL, 30
+            INT 21h
+
+            CALL PRINTSEPARATOR
+
+            MOV AH, 2h
+            MOV DL, '?'
+            INT 21h
+
+            CALL PRINTSEPARATOR
+            
+            MOV AH, 2h
+            MOV DL, [result][1]
+            ADD DL, 30
+            INT 21h
+
+            CALL PRINTSEPARATOR
+
+            MOV AH, 2h
+            MOV DL, [result][2]
+            ADD DL, 30
+            INT 21h
+
+            CALL PRINTSEPARATOR
+
+            MOV AH, 2h
+            MOV DL, [result][3]
+            ADD DL, 30
+            INT 21h
+
+            MOV AH, 9h
+            MOV DX, OFFSET endline
+            INT 21h
+
+            CALL PRINTP1
+
+            CALL PRINTP2
+
+            CALL PRINTP3
+
+PRINT ENDP
 
 ; END OF CODE SEGMENT
 CODE ENDS
