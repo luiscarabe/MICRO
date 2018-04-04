@@ -1,5 +1,5 @@
 ;**************************************************************************
-; 2nd DELIVERABLE - Labs2a.asm
+; 2st DELIVERABLE - Labs2a.asm
 ; Juan Riera, Luis Carabe
 ;**************************************************************************
 ; DATA SEGMENT DEFINITION
@@ -49,7 +49,7 @@ MOV DL, 0
 MOV BH, 1
 MOV BL, 1
 CALL MULTMATRIX
-CALL PRINTRES
+
 ; PROGRAM END
 MOV AX, 4C00H
 INT 21H
@@ -104,24 +104,24 @@ PRINTINRESULT PROC
 
             MOV CX, 0
             MOV AH, 2h
-;;CAMBIAR SIGUIENTE LINEA
-printloop1: MOV DL, prodVECTOR[0]
-            ADD DL, 30h
+
+print:      MOV DL, [result][CX]
+            ADD DL, 30
             INT 21h
             MOV DL, ' '
             INT 21h
             INC CX
             CMP CX, 3
-            JNZ printloop1
+            JNZ print
             
-            MOV DL, prodVECTOR[3]
-            ADD DL, 30h
+            MOV DL, [result][CX]
+            ADD DL, 30
             INT 21h 
             
             MOV DX, OFFSET endline
             MOV AH, 9h
             INT 21h
-ret
+
 PRINTINRESULT ENDP
 
 PRINTOUTRESULT PROC
@@ -129,45 +129,45 @@ PRINTOUTRESULT PROC
             MOV CX, 0
             MOV AH, 2h
 
-            MOV DL, prodVECTOR[4]
-            ADD DL, 30h
+            MOV DL, [result][4]
+            ADD DL, 30
             INT 21h
             MOV DL, ' '
             INT 21h
-            MOV DL, prodVECTOR[5]
-            ADD DL, 30h
+            MOV DL, [result][5]
+            ADD DL, 30
             INT 21h
             MOV DL, ' '
             INT 21h
-            MOV DL, prodVECTOR[0]
-            ADD DL, 30h
+            MOV DL, [result][0]
+            ADD DL, 30
             INT 21h
             MOV DL, ' '
             INT 21h
-            MOV DL, prodVECTOR[6]
-            ADD DL, 30h
+            MOV DL, [result][6]
+            ADD DL, 30
             INT 21h
             MOV DL, ' '
             INT 21h
-            MOV DL, prodVECTOR[1]
-            ADD DL, 30h
+            MOV DL, [result][1]
+            ADD DL, 30
             INT 21h
             MOV DL, ' '
             INT 21h
-            MOV DL, prodVECTOR[2]
-            ADD DL, 30h
+            MOV DL, [result][2]
+            ADD DL, 30
             INT 21
             MOV DL, ' '
             INT 21h
-            MOV DL, prodVECTOR[3]
-            ADD DL, 30h
+            MOV DL, [result][3]
+            ADD DL, 30
             INT 21h
             
             
             MOV DX, OFFSET endline
             MOV AH, 9h
             INT 21h
-ret
+
 PRINTOUTRESULT ENDP
 
 PRINTSEPARATOR PROC
@@ -175,7 +175,7 @@ PRINTSEPARATOR PROC
             MOV AH, 9h
             MOV DX, OFFSET separator
             INT 21h
-ret
+
 PRINTSEPARATOR ENDP
 
 PRINTP1 PROC
@@ -184,8 +184,8 @@ PRINTP1 PROC
             INT 21h
 
             MOV AH, 2h
-            MOV DL, prodVECTOR[4]
-            ADD DL, 30h
+            MOV DL, [result][4]
+            ADD DL, 30
             INT 21h
 
             CALL PRINTSEPARATOR
@@ -197,8 +197,8 @@ PRINTP1 PROC
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
-            MOV DL, prodVECTOR[0]
-            ADD DL, 30h
+            MOV DL, [result][0]
+            ADD DL, 30
             INT 21h
 
             CALL PRINTSEPARATOR
@@ -210,8 +210,8 @@ PRINTP1 PROC
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
-            MOV DL, prodVECTOR[1]
-            ADD DL, 30h
+            MOV DL, [result][1]
+            ADD DL, 30
             INT 21h 
             
             CALL PRINTSEPARATOR
@@ -223,15 +223,14 @@ PRINTP1 PROC
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
-            MOV DL, prodVECTOR[3]
-			ADD DL, 30h
+            MOV DL, [result][3]
             INT 21h
 
 
             MOV DX, OFFSET endline
             MOV AH, 9h
             INT 21h
-ret
+
 PRINTP1 ENDP
 
 
@@ -242,15 +241,15 @@ PRINTP2 PROC
             INT 21h
 
             MOV AH, 2h
-            MOV DL, prodVECTOR[5]
-            ADD DL, 30h
+            MOV DL, [result][5]
+            ADD DL, 30
             INT 21h
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
-            MOV DL, prodVECTOR[0]
-            ADD DL, 30h
+            MOV DL, [result][0]
+            ADD DL, 30
             INT 21h
 
             CALL PRINTSEPARATOR
@@ -268,72 +267,70 @@ PRINTP2 PROC
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
-            MOV DL, prodVECTOR[2]
-            ADD DL, 30h
+            MOV DL, [result][2]
+            MOV DL, 30
             INT 21h
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
-            MOV DL, prodVECTOR[3]
-			ADD DL, 30h
+            MOV DL, [result][3]
             INT 21h
 
 
             MOV DX, OFFSET endline
             MOV AH, 9h
             INT 21h
-ret
+
 PRINTP2 ENDP
 
-PRINTP4 PROC
+PRINTP3 PROC
 
             MOV AH, 9h
-            MOV DX, OFFSET p4
+            MOV DX, OFFSET p3
             INT 21h
             
             MOV AH, 2h
-            MOV DL, prodVECTOR[6]
-            ADD DL, 30h
+            MOV DL, [result][6]
+            ADD DL, 30
             INT 21h
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
-            MOV DL, prodVECTOR[1]
-            ADD DL, 30h
+            MOV DL, [result][1]
+            ADD DL, 30
             INT 21h 
             
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
-            MOV DL, prodVECTOR[2]
-            ADD DL, 30h
+            MOV DL, [result][2]
+            MOV DL, 30
             INT 21h
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
-            MOV DL, prodVECTOR[3]
-			ADD DL, 30h
+            MOV DL, [result][3]
             INT 21h
 
 
             MOV DX, OFFSET endline
             MOV AH, 9h
             INT 21h
-ret
-PRINTP4 ENDP
+
+PRINTP3 ENDP
 
 
-PRINTRES PROC
-			;MOV ES, DX
-	        ;MOV result, [ES:AX] ;Guardo a buen recaudo 
+PRINT PROC
+	        MOV result, AX:DX ;Guardo a buen recaudo 
                               ;el contenido de AX:DX
                             ;ya que voy a necesitarlos ahora
             MOV AH, 9h ;Preparo la funcion a la que quiero llamar
             MOV DX, OFFSET input
             INT 21h
+
 
             CALL PRINTINRESULT
 
@@ -347,22 +344,9 @@ PRINTRES PROC
             MOV DX, OFFSET computation
             INT 21h
 
-
             MOV AH, 2h
-            MOV DL, '?'
-            INT 21h
-
-            CALL PRINTSEPARATOR
-
-            MOV AH, 2h
-            MOV DL, '?'
-            INT 21h
-
-            CALL PRINTSEPARATOR
-			
-            MOV AH, 2h
-            MOV DL, prodVECTOR[0]
-            ADD DL, 30h
+            MOV DL, [result][0]
+            ADD DL, 30
             INT 21h
 
             CALL PRINTSEPARATOR
@@ -374,22 +358,22 @@ PRINTRES PROC
             CALL PRINTSEPARATOR
             
             MOV AH, 2h
-            MOV DL, prodVECTOR[1]
-            ADD DL, 30h
+            MOV DL, [result][1]
+            ADD DL, 30
             INT 21h
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
-            MOV DL, prodVECTOR[2]
-            ADD DL, 30h
+            MOV DL, [result][2]
+            ADD DL, 30
             INT 21h
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
-            MOV DL, prodVECTOR[3]
-            ADD DL, 30h
+            MOV DL, [result][3]
+            ADD DL, 30
             INT 21h
 
             MOV AH, 9h
@@ -400,9 +384,9 @@ PRINTRES PROC
 
             CALL PRINTP2
 
-            CALL PRINTP4
-ret
-PRINTRES ENDP
+            CALL PRINTP3
+
+PRINT ENDP
 
 ; END OF CODE SEGMENT
 CODE ENDS

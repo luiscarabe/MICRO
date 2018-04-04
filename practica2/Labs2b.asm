@@ -1,5 +1,5 @@
 ;**************************************************************************
-; 2nd DELIVERABLE - Labs2a.asm
+; 2bd DELIVERABLE - Labs2b.asm
 ; Juan Riera, Luis Carabe
 ;**************************************************************************
 ; DATA SEGMENT DEFINITION
@@ -16,6 +16,8 @@ p1 db "P1   | ", '$'
 p2 db "P2   |    | ", '$'
 p4 db "P4   |    |    |    | ", '$'
 result db 2 dup(0)
+askuser db "Porfavor introduzca un caracter:", 13, 10, '$'
+character db 1, 0, 0
 endline db 13, 10, '$'
 DATOS ENDS			  
 ;**************************************************************************
@@ -43,17 +45,26 @@ MOV ES, AX
 MOV SP, 64 ; LOAD THE STACK POINTER WITH THE HIGHEST VALUE
 
 ; PROGRAM START
-; Guardo el numerito, ORDEN??
-MOV DH, 1
-MOV DL, 0
-MOV BH, 1
-MOV BL, 1
+CALL GETASCIIFROMUSER
+MOV BX, character[2]
+
 CALL MULTMATRIX
 CALL PRINTRES
 ; PROGRAM END
 MOV AX, 4C00H
 INT 21H
 INICIO ENDP
+
+GETASCIIFROMUSER PROC
+	MOV DX, OFFSET askuser
+	MOV AH, 09h
+	INT 21h
+	
+	MOV AH, 0AH
+	MOV DX, OFFSET character
+	INT 21h
+
+GETASCIIFROMUSER ENDP
 
 MULTMATRIX PROC 
 
@@ -327,10 +338,6 @@ PRINTP4 ENDP
 
 
 PRINTRES PROC
-			;MOV ES, DX
-	        ;MOV result, [ES:AX] ;Guardo a buen recaudo 
-                              ;el contenido de AX:DX
-                            ;ya que voy a necesitarlos ahora
             MOV AH, 9h ;Preparo la funcion a la que quiero llamar
             MOV DX, OFFSET input
             INT 21h

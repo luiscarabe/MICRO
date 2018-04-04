@@ -1,5 +1,5 @@
 ;**************************************************************************
-; 2nd DELIVERABLE - dec2AS.asm
+; 2st DELIVERABLE - dec2AS.asm
 ; Juan Riera, Luis Carabe
 ;**************************************************************************
 ; DATA SEGMENT DEFINITION

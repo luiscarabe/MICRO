@@ -1,0 +1,33 @@
+Este dos box no es necesario instalarlo.
+
+Ya viene modificado el archivo de configuracion (dosbox.conf), tan solo tienes
+que tener en cuenta la configuración final. Es decir:
+
+	mount c D:\proyectos\msdos
+	c:
+	keyb sp
+	PATH=%PATH;c:\compila\tc\bin;c:\compila\tc\lib;c:\compila\td;c:\bin
+
+
+Recordad que "D:\proyectos\msdos" lo cambiaréis por vuestro directorio de trabajo para MSDOS. En caso
+de que no tengáis una carpeta con los compiladores y el entorno podéis usar la que viene en el ZIP y que se llama
+"msdos".
+
+
+"keyb sp" es para poner el teclado en Español (si dice que no reconoce 'sp' probar con 'es')
+El PATH será el que vosotros tengáis configurado.
+
+
+El ejecutable del programa es el archivo "dosbox.exe".
+
+
+Despues, vas a "inicio->ejecutar" y pones "cmd" para abrir el simbolo de sistema, vas a la carpeta
+"puerto" y ejecutas lo siguiente:
+
+allowio beep /a
+
+NOTA: tienes que mirar en la BIOS que el puerto paralelo sea el 378/IRQ7 o algo similar, y que el 
+modo de puerto paralelo sea modo NORMAL
+
+Una vez hecho esto, ejecuta el PARAL.EXE o el programa de TESTUWIRE para comprobar que te lee el puerto paralelo. 
+
