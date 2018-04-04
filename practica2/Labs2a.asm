@@ -102,22 +102,26 @@ MULTMATRIX ENDP
 
 PRINTINRESULT PROC
 
-            MOV CX, 0
+            MOV BX, 0
             MOV AH, 2h
-;;CAMBIAR SIGUIENTE LINEA
-printloop1: MOV DL, prodVECTOR[0]
+			MOV DL, '"'
+			INT 21h
+printloop1: MOV DL, prodVECTOR[BX]
             ADD DL, 30h
             INT 21h
             MOV DL, ' '
             INT 21h
-            INC CX
-            CMP CX, 3
+            INC BX
+            CMP BX, 3
             JNZ printloop1
-            
+			
             MOV DL, prodVECTOR[3]
             ADD DL, 30h
             INT 21h 
             
+			MOV DL, '"'
+			INT 21h
+			
             MOV DX, OFFSET endline
             MOV AH, 9h
             INT 21h
@@ -126,44 +130,55 @@ PRINTINRESULT ENDP
 
 PRINTOUTRESULT PROC
         
-            MOV CX, 0
             MOV AH, 2h
-
+			MOV DL, '"'
+			INT 21h
+			
             MOV DL, prodVECTOR[4]
             ADD DL, 30h
             INT 21h
+			
             MOV DL, ' '
             INT 21h
+			
             MOV DL, prodVECTOR[5]
             ADD DL, 30h
             INT 21h
+			
             MOV DL, ' '
             INT 21h
+			
             MOV DL, prodVECTOR[0]
             ADD DL, 30h
             INT 21h
+			
             MOV DL, ' '
             INT 21h
+			
             MOV DL, prodVECTOR[6]
             ADD DL, 30h
             INT 21h
             MOV DL, ' '
             INT 21h
+			
             MOV DL, prodVECTOR[1]
             ADD DL, 30h
             INT 21h
             MOV DL, ' '
             INT 21h
+			
             MOV DL, prodVECTOR[2]
             ADD DL, 30h
-            INT 21
+            INT 21h
             MOV DL, ' '
             INT 21h
+			
             MOV DL, prodVECTOR[3]
             ADD DL, 30h
             INT 21h
-            
-            
+			MOV DL, '"'
+			INT 21h
+			
             MOV DX, OFFSET endline
             MOV AH, 9h
             INT 21h
