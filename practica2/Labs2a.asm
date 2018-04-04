@@ -78,7 +78,7 @@ MULT:		MOV AL, dataVECTOR[BX] ; First operand of the product (appropriate number
 			ADD DX, AX ; Add the result to the partial sum of the row product
 			INC BX ; Increment the column of the product
 			CMP BX, 4  ; Substract 4 from BX to see if we have multiply every 4 numbers of the row 
-			JNZ MULT ; If not, we continue multiplying, without setting BX and DX
+			JNZ MULT ; If not, we continue multiplying, without setting BX or DX
 			MOV BX, COUNTER ; We move the content of COUNTER to BX, so we can properly write the result of the product 
 			MOV prodVECTOR[BX], DL ; Store of the final row sum result in memory (prodVECTOR)
 			INC COUNTER ; Increment the COUNTER 
