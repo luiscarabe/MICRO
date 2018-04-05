@@ -4,10 +4,13 @@
 ;**************************************************************************
 ; DATA SEGMENT DEFINITION
 DATOS SEGMENT
-COUNTER DW 0 ; Reserve memory for the counter, one word (two bytes), set to 0
-dataVECTOR DB 4 dup(?) ;
-prodVECTOR DB 8 dup(0) ; Result of multi
-genMATRIX DB 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,1,1,0,1,1,0,1,1,0,1,1,1 ; Generation MATRIX (array) TRASPUESTA
+COUNTER DW 0 ; Reserve memory for the counter (index to store the result in prodVECTOR), one word (two bytes), set to 0
+dataVECTOR DB 4 dup(?) ; Reserve memory for the input data vector (4 bytes)
+prodVECTOR DB 7 dup(0) ; Reserve memory for the result of dataVECTOR * genMATRIX (7 bytes)
+genMATRIX DB 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,1,1,0,1,1,0,1,1,0,1,1,1 ; Generation MATRIX (transposed), in form of array
+; We will need this matrix to compute the parity bits
+; We transpose the matrix in order to simplify the product operation (we prefer to multiply the dataVECTOR using 
+; genMATRIX rows instead of the columns)
 input db "Input: ", '$'
 output db "Output: ", '$'
 computation db "Computation: ", 13, 10, "     | P1 | P2 | D1 | P4 | D2 | D3 | D4  ", 13, 10, "Word | ", '$'
@@ -43,12 +46,12 @@ MOV ES, AX
 MOV SP, 64 ; LOAD THE STACK POINTER WITH THE HIGHEST VALUE
 
 ; PROGRAM START
-; Guardo el numerito, ORDEN??
+; Store of the data vector in DX:BX
 MOV DH, 1
 MOV DL, 0
 MOV BH, 1
 MOV BL, 1
-CALL MULTMATRIX
+CALL MULTMATRIX ; Call to the function that multiplies the recently stored vector with the genMATRIX
 CALL PRINTRES
 ; PROGRAM END
 MOV AX, 4C00H
@@ -57,46 +60,48 @@ INICIO ENDP
 
 MULTMATRIX PROC 
 
-; Guardamos los datos OJO: NO SE MU BIEN SI GUARDO EN EL ORDEN CORRECTO
+; We receive the 4-bits input number in registers DX:BX
+; We must store the number in memory
 MOV dataVECTOR[0], DH
 MOV dataVECTOR[1], DL
 MOV dataVECTOR[2], BH
 MOV dataVECTOR[3], BL
 
-MOV DI, 0 ; DI va a ser el que apunte a las filas
+MOV DI, 0 ; We are going to use DI as an index to the matrix rows, so we initialize it with a 0 (first row)
 
+SETMULT:	MOV BX, 0 ; We are going to use BX as an index to the matrix columns, we store a 0 in it (first column)
+			MOV DX, 0 ; We are going to use DX as the partial sum of each row product
 
-SETMULT:	MOV BX, 0 ; BX va a ser el que apunte a las columnas
-			MOV DX, 0 ; Suma de cada mult de fila (estamos en traspuestas)
-
-MULT:		MOV AL, dataVECTOR[BX] ; operando de la mult
-			MOV CL, genMATRIX[BX][DI] ; operando de la mult
-			MUL CL ;multiplicamos CL por AL, resultado en AX
-			ADD DX, AX ; hacemos la suma parcial
-			INC BX
-			CMP BX, 4 ; Comprobamos que hayamos sumado todas las columnas
-			JNZ MULT
-			MOV BX, COUNTER ; Contador para escribir correctamente el resultado
-			MOV prodVECTOR[BX], DL ; Guardamos digito
-			INC COUNTER
-			ADD DI, 4 ; Cambiamos de fila (4 elems por fila so sumamos 4)
-			CMP COUNTER, 7 ; Miramos si hemos multiplicado todas las filas
-			JNZ SETMULT
+MULT:		MOV AL, dataVECTOR[BX] ; First operand of the product (appropriate number of dataVECTOR) (we need to store it at AL because we are using 8-bit operands)
+			MOV CL, genMATRIX[BX][DI] ; Second operand of the product stored in CL (appropriate number of genMATRIX)
+			MUL CL ; Multiply AL with CL, result in AX
+			ADD DX, AX ; Add the result to the partial sum of the row product
+			INC BX ; Increment the column of the product
+			CMP BX, 4  ; Substract 4 from BX to see if we have multiply every 4 numbers of the row 
+			JNZ MULT ; If not, we continue multiplying, without setting BX or DX
+			MOV BX, COUNTER ; We move the content of COUNTER to BX, so we can properly write the result of the product 
+			MOV prodVECTOR[BX], DL ; Store of the final row sum result in memory (prodVECTOR)
+			INC COUNTER ; Increment the COUNTER 
+			ADD DI, 4 ; Change to the next row by adding 4 to the row index (because we have 4 elements for each row and we are using an array as MATRIX)
+			CMP COUNTER, 7 ; Substract 7 from COUNTER to see if we have multiply every row (the matrix has 7 rows)
+			JNZ SETMULT ; If not, we continue multiplying other rows, so we need to set first the column index (BX) and partial sum (DX)
 			
-			MOV BX, 0; Index para hacer modulo
-			MOV CL, 2 ; Divisor pa hacer MOD 2
-resMOD:		MOV AL, prodVECTOR[BX] ; Guardamos dividendo
-			MOV AH, 0
-			MOV DX, 0
-			DIV CL ; (AX entre 2), resto en AH
-			MOV prodVECTOR[BX], AH
-			INC BX
-			CMP BX, 7
-			JNZ resMOD
+			; Now we may compute modulo 2 of the generated result vector 
+
+			MOV BX, 0 ; BX is going to be the index of the vector
+			MOV CL, 2 ; We assign the value 2 to CL, this register will be used as the divisor (MOD 2)
+resMOD:		MOV AL, prodVECTOR[BX] ; We move the number to AL, this register will be used by div as the dividend (we are using an 8-bit operand)
+			MOV AH, 0 ; Store a zero in AH, to ensure that we dont have unintended data
+			MOV DX, 0 ; We must store a 0 in DX in order to use div properly	
+			DIV CL ; We divide AL by CL (2), The result of the MOD operation is stored at AH (remainder)
+			MOV prodVECTOR[BX], AH ; Change of the previous value, in consequence, now we have the number mod 2
+			INC BX ; Increment index
+			CMP BX, 7 ; Substract 7 from BX to see if we have done the operation to all the vector numbers (7)
+			JNZ resMOD ; If not, we continue applying mod to the next vector number
 			
-MOV DX, SEG prodVECTOR
-MOV AX, OFFSET prodVECTOR
-ret
+MOV DX, SEG prodVECTOR ; Store of the result segment at DX
+MOV AX, OFFSET prodVECTOR ; Store of the result offset at AX
+ret ; Return to the procedure that called MULTMATRIX 
 
 MULTMATRIX ENDP
 
