@@ -9,7 +9,7 @@ computation db "Computation: ", 13, 10, "     | P1 | P2 | D1 | P4 | D2 | D3 | D4
 askuser db "Porfavor introduzca un caracter:", 13, 10, '$'
 character dw 2, 3 dup(0)
 endline db 13, 10, '$'
-result db 4 dup(0)
+result dw 4 dup(0)
 DATOS ENDS			  
 ;**************************************************************************
 ; STACK SEGMENT DEFINITION
@@ -36,20 +36,23 @@ MOV ES, AX
 MOV SP, 64 ; LOAD THE STACK POINTER WITH THE HIGHEST VALUE
 
 ; PROGRAM START
-;CALL GETASCIIFROMUSER
+CALL GETASCIIFROMUSER
 MOV AX, character[2]
 SUB AX, 30h
-
+MUL 10
 MOV DX, character[3]
-
-MUL
+SUB DX, 30h
+ADD AX, DX
 
 ;; Comprobar errores
+
 MOV SI, 0
-             	MOV CX, 2
-divisionloop:	DIV CX
+             	MOV CL, 2
+divisionloop:	DIV CL
+				MOV DL, AH
+				MOV DH, 0h
 				ADD DX, 30h
-				MOV result[SI], DL
+				MOV result[SI], DX
 				MOV DX, 0
 				INC SI
 				CMP AX, 0
@@ -57,6 +60,8 @@ divisionloop:	DIV CX
 				
 MOV result[SI], '$'
 MOV AH, 09h
+MOV DL, OFFSET endline
+INT 21h
 MOV DL, OFFSET result	
 INT 21h
 MOV AX, 4C00h
