@@ -1,6 +1,7 @@
 ;**************************************************************************
 ; 2bd DELIVERABLE - Labs2b.asm
 ; Juan Riera, Luis Carabe
+; Group 2351 Team 02
 ;**************************************************************************
 ; DATA SEGMENT DEFINITION
 DATOS SEGMENT

@@ -1,6 +1,7 @@
 ;**************************************************************************
 ; 2nd DELIVERABLE - dec2AS.asm
 ; Juan Riera, Luis Carabe
+; Group 2351 Team 02
 ;**************************************************************************
 ; DATA SEGMENT DEFINITION
 DATOS SEGMENT
@@ -62,7 +63,7 @@ dig2ASCII:	INC COUNTERup ; Increment by one the counter
 			MOV BX, 0 ; We store a 0 in bx in order to have an auxiliar counter to reorder and store the result
 			
 reorderNum:	POP DX ; We extract one value from the stack and store it in DX
-			MOV ASCIINUM[BX], DL ; We move the value to ASCIINUM (the result)
+			MOV ASCIINUM[BX], DL ; We move the value to ASCIINUM (the result size is 8 bits so it is stored at DL)
 			INC BX ; Increment by one the auxiliar counter (BX)
 			CMP BX, COUNTERup ; Compare the aux counter with COUNTERup
 			JNZ reorderNum ; If is not the same, it means that we still need to pop some digits
