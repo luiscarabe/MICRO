@@ -52,7 +52,7 @@ MOV DL, 0
 MOV BH, 1
 MOV BL, 1
 CALL MULTMATRIX ; Call to the function that multiplies the recently stored vector with the genMATRIX
-CALL PRINTRES
+CALL PRINTRES ; Call the function that prints the result of the previous function
 ; PROGRAM END
 MOV AX, 4C00H
 INT 21H
@@ -107,86 +107,93 @@ MULTMATRIX ENDP
 
 PRINTINRESULT PROC
 
-            MOV BX, 0
-            MOV AH, 2h
-			MOV DL, '"'
-			INT 21h
-printloop1: MOV DL, prodVECTOR[BX]
-            ADD DL, 30h
-            INT 21h
-            MOV DL, ' '
-            INT 21h
-            INC BX
-            CMP BX, 3
-            JNZ printloop1
+
+            MOV AH, 2h ; We prepare the function to print the ascii
+			MOV DL, '"' ; We prepare the ascii to be printed
+			INT 21h ; We call the interruption to print it
+			MOV BX, 0 ; We are storing 0 in BX because we will use it
+					  ; as a counter in the loop
+printloop1: MOV DL, prodVECTOR[BX] ; We load the first byte to print it
+            ADD DL, 30h ; Add 30h so that it is in ascii
+            INT 21h ; Interruption to print the character (AH already has 2h
+            		; so we don't have to store it again.
+            MOV DL, ' ' ; Store in DL the ascii of a space so that we can print it
+            INT 21h		; Interruption to print the ascii
+            INC BX		; We increment the loop counter
+            CMP BX, 3	; We check if it has the value 3
+            JNZ printloop1 ; If it is still not three we jump back
+            			   ; to the start of the loop
 			
+			; Now we do the same with the last character. 
+			; It is outside the loop because it is not followed
+			; by a space.
             MOV DL, prodVECTOR[3]
-            ADD DL, 30h
-            INT 21h 
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
             
 			MOV DL, '"'
-			INT 21h
+			INT 21h ; Interruption to print it on the screen
 			
             MOV DX, OFFSET endline
             MOV AH, 9h
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 ret
 PRINTINRESULT ENDP
 
 PRINTOUTRESULT PROC
         
-            MOV AH, 2h
+            MOV AH, 2h ; 
 			MOV DL, '"'
-			INT 21h
+			INT 21h ; Interruption to print it on the screen
 			
             MOV DL, prodVECTOR[4]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 			
             MOV DL, ' '
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 			
             MOV DL, prodVECTOR[5]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 			
             MOV DL, ' '
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 			
             MOV DL, prodVECTOR[0]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 			
             MOV DL, ' '
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 			
             MOV DL, prodVECTOR[6]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
             MOV DL, ' '
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 			
             MOV DL, prodVECTOR[1]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
             MOV DL, ' '
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 			
             MOV DL, prodVECTOR[2]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
             MOV DL, ' '
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 			
             MOV DL, prodVECTOR[3]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 			MOV DL, '"'
-			INT 21h
+			INT 21h ; Interruption to print it on the screen
 			
             MOV DX, OFFSET endline
             MOV AH, 9h
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 ret
 PRINTOUTRESULT ENDP
 
@@ -194,63 +201,63 @@ PRINTSEPARATOR PROC
 
             MOV AH, 9h
             MOV DX, OFFSET separator
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 ret
 PRINTSEPARATOR ENDP
 
 PRINTP1 PROC
             MOV AH, 9h
             MOV DX, OFFSET p1
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 
             MOV AH, 2h
             MOV DL, prodVECTOR[4]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, ' '
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, prodVECTOR[0]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, ' '
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, prodVECTOR[1]
-            ADD DL, 30h
-            INT 21h 
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen 
             
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, ' '
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, prodVECTOR[3]
-			ADD DL, 30h
-            INT 21h
+			ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 
 
             MOV DX, OFFSET endline
             MOV AH, 9h
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 ret
 PRINTP1 ENDP
 
@@ -259,50 +266,50 @@ PRINTP2 PROC
 
             MOV AH, 9h
             MOV DX, OFFSET p2
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 
             MOV AH, 2h
             MOV DL, prodVECTOR[5]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, prodVECTOR[0]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, ' '
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, ' '
-            INT 21h 
+            INT 21h ; Interruption to print it on the screen 
             
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, prodVECTOR[2]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, prodVECTOR[3]
-			ADD DL, 30h
-            INT 21h
+			ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 
 
             MOV DX, OFFSET endline
             MOV AH, 9h
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 ret
 PRINTP2 ENDP
 
@@ -310,38 +317,38 @@ PRINTP4 PROC
 
             MOV AH, 9h
             MOV DX, OFFSET p4
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
             
             MOV AH, 2h
             MOV DL, prodVECTOR[6]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, prodVECTOR[1]
-            ADD DL, 30h
-            INT 21h 
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen 
             
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, prodVECTOR[2]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, prodVECTOR[3]
-			ADD DL, 30h
-            INT 21h
+			ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 
 
             MOV DX, OFFSET endline
             MOV AH, 9h
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 ret
 PRINTP4 ENDP
 
@@ -353,68 +360,68 @@ PRINTRES PROC
                             ;ya que voy a necesitarlos ahora
             MOV AH, 9h ;Preparo la funcion a la que quiero llamar
             MOV DX, OFFSET input
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTINRESULT
 
             MOV AH, 9h ;Preparo la funcion a la que quiero llamar
             MOV DX, OFFSET output
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTOUTRESULT
 
             MOV AH, 9h
             MOV DX, OFFSET computation
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 
 
             MOV AH, 2h
             MOV DL, '?'
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, '?'
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTSEPARATOR
 			
             MOV AH, 2h
             MOV DL, prodVECTOR[0]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, '?'
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTSEPARATOR
             
             MOV AH, 2h
             MOV DL, prodVECTOR[1]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, prodVECTOR[2]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTSEPARATOR
 
             MOV AH, 2h
             MOV DL, prodVECTOR[3]
-            ADD DL, 30h
-            INT 21h
+            ADD DL, 30h ; Convert it to ascii code
+            INT 21h ; Interruption to print it on the screen
 
             MOV AH, 9h
             MOV DX, OFFSET endline
-            INT 21h
+            INT 21h ; Interruption to print it on the screen
 
             CALL PRINTP1
 
