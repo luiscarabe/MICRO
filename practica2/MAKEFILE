@@ -1,4 +1,4 @@
-all: dec2AS.exe labs2a.exe labs2b.exe labs2c.exe
+all: dec2AS.exe labs2a.exe labs2b.exe
 
 dec2AS.exe: dec2AS.obj
     tlink /v dec2AS
@@ -17,12 +17,6 @@ labs2b.exe: labs2b.obj
 
 labs2b.obj: labs2b.asm
     tasm /zi labs2b.asm
-	
-labs2c.exe: labs2c.obj
-    tlink /v labs2c
-
-labs2c.obj: labs2c.asm
-    tasm /zi labs2c.asm
 	
 clean:
 	del *.exe 
