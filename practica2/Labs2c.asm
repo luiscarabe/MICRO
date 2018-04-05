@@ -1,9 +1,20 @@
 ;**************************************************************************
-; 2nd DELIVERABLE - Labs2a.asm
+; 2bd DELIVERABLE - Labs2b.asm
 ; Juan Riera, Luis Carabe
 ;**************************************************************************
 ; DATA SEGMENT DEFINITION
 DATOS SEGMENT
+; Here we have an auxiliar endline in case we want to print any
+endline db 13, 10, '$' ;Auxiliar endline string
+; This string is the one printed so that the user knows that they 
+; have to type a two digit number between 0 and 15  
+askuser db "Please enter a two digit number between 0 and 15:", 13, 10, '$'
+; This variable will be used to store whatever the user types
+character db 2, 3 dup(0)
+; In this variable will be stored the results of the computations
+result db 4 dup(0), '$'
+; This string stores the error message
+errormessage db "Error: incorrect data", 13, 10, '$'
 COUNTER DW 0 ; Reserve memory for the counter (index to store the result in prodVECTOR), one word (two bytes), set to 0
 dataVECTOR DB 4 dup(?) ; Reserve memory for the input data vector (4 bytes)
 prodVECTOR DB 7 dup(0) ; Reserve memory for the result of dataVECTOR * genMATRIX (7 bytes)
@@ -11,7 +22,7 @@ genMATRIX DB 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,1,1,0,1,1,0,1,1,0,1,1,1 ; Generatio
 ; We will need this matrix to compute the parity bits
 ; We transpose the matrix in order to simplify the product operation (we prefer to multiply the dataVECTOR using 
 ; genMATRIX rows instead of the columns)
-; The next variables are  the strings that will be printed during the exercise
+; The next variables are  the strings that will be printed to show the result in a matrix
 input db "Input: ", '$'
 output db "Output: ", '$'
 computation db "Computation: ", 13, 10, "     | P1 | P2 | D1 | P4 | D2 | D3 | D4  ", 13, 10, "Word | ", '$'
@@ -19,10 +30,6 @@ separator db "  | ", '$'
 p1 db "P1   | ", '$'
 p2 db "P2   |    | ", '$'
 p4 db "P4   |    |    |    | ", '$'
-; In this variable we will store the result of the computation
-result db 2 dup(0)
-; Here we have an auxiliaar endline in case we want to print any
-endline db 13, 10, '$'
 DATOS ENDS			  
 ;**************************************************************************
 ; STACK SEGMENT DEFINITION
@@ -49,17 +56,110 @@ MOV ES, AX
 MOV SP, 64 ; LOAD THE STACK POINTER WITH THE HIGHEST VALUE
 
 ; PROGRAM START
-; Store of the data vector in DX:BX
-MOV DH, 1
-MOV DL, 0
-MOV BH, 1
-MOV BL, 1
+start: CALL GETASCIIFROMUSER ; Ask for a number
+MOV AL, character[1] ; See how many characters the user typed
+CMP AL, 0 ; If they typed 0 characters
+JZ ERRORMSG1 ; We display the error and start again
+CMP AL, 1  ; If they typed one character
+JZ ONECHAR ; We transform it from ascii to binary
+CALL TWOCHAR ; Else it should be two characters long, because
+			 ; we stored in character[0] a 2 number, so that 
+			 ; the user could not type more than two characters
+
+division: CMP AL, 15 ; Before we make the division, we need to
+JG ERRORMSG1 ; make sure that the number is lower than 15
+MOV CL, 0 ; and that it is not lower than 0
+CMP CL, AL
+JG ERRORMSG1
+MOV SI, 3 ; We will use the SI as a pointer in the result variable
+		; to store the bytes in theis positions
+             	MOV CL, 2 ; We are going to divide by 2
+				
+divisionloop:	MOV AH, 0 ; We prepare AH
+				MOV DX, 0 ; and DX for the division
+				DIV CL ; perform the division
+				MOV DL, AH ; We move the remainder to DL
+				MOV DH, 0h ; Store a 0 in DH
+				ADD DX, 30h  ; Convert the number to ascii
+				MOV result[SI], DL ; Store the remainder in ascii in
+									; the correct position of the variable
+									; result
+				SUB SI, 1 ; Subtract 1 to SI because we are starting from the
+						; HIGHEST position to the lowest
+				CMP AL, 0 ; If the quotient is 0 we are done
+				JNZ divisionloop ; If not we start the loop again
+
+; Now we print an end of line
+MOV AH, 09h
+MOV DL, OFFSET endline
+INT 21h
+; We could print the result of the previous computation by
+; uncommenting the next two lines
+;MOV DL, OFFSET result	
+;INT 21h
+
+; Here we load the result of the previous computation in the
+; registers where the function of the previous exercise
+; needed it 
+MOV DH, result[0]
+MOV DL, result[1]
+MOV BH, result[2]
+MOV BL, result[3]
 CALL MULTMATRIX ; Call to the function that multiplies the recently stored vector with the genMATRIX
 CALL PRINTRES ; Call the function that prints the result of the previous function
+
 ; PROGRAM END
 MOV AX, 4C00H
 INT 21H
+errormsg1: JMP errormsg ; Auxiliar jump for far jumps
 INICIO ENDP
+
+; Auxiliar function called when the user introduces a
+; one character number and converts it to binary in AL
+ONECHAR PROC
+ONECHAR: MOV AL, character[2] ; Load the ascii character
+	SUB AL, 30h ; Change from ascii to number
+	JMP division ; Continue the program
+ONECHAR ENDP
+
+; Auxiliar function called when the user introduces a
+; two character number and converts it to binary in AL
+TWOCHAR PROC
+	MOV AL, character[2] ; Load the tens in AL
+	SUB AL, 30h ; Get the numeric value (not ascii)
+	MOV AH, 0 ; Expand the number to the whole AX
+	MOV CL, 10 ; Load a 10 in CL for the multiplication
+	MUL CL ; We get the tens positional numeric value
+	MOV DL, character[3] ; We get now the units ascii
+	SUB DL, 30h ; Get the numeric value
+	ADD AL, DL ; Sum both numbers
+	JMP division ; Continue the program
+TWOCHAR ENDP
+
+; Auxiliar function called when the user types an incorrect
+; number. The function displays a message and restarts the program
+ERRORMSG PROC
+ERRORMSG:	MOV DX, OFFSET errormessage ; Point at the variable
+	MOV AH, 09h ; Load the function
+	INT 21h ; Interrupt
+	JMP start ; jump to the start of the program
+ERRORMSG ENDP
+	
+; Auxiliar function that asks the user for a number and
+; stores it into the chracter variable
+GETASCIIFROMUSER PROC
+	; Print the message asking the user for a number
+	MOV DX, OFFSET askuser ; Point at the variable
+	MOV AH, 09h ; Load the function
+	INT 21h ; Interrupt
+	
+	; Store what the user typed in the variable character
+	MOV AH, 0AH ; Point at the variable
+	MOV DX, OFFSET character ; Load the function
+	MOV character[0], 3 ; The number can be 2 bytes long maximum 
+	INT 21h ; Interrupt
+ret
+GETASCIIFROMUSER ENDP
 
 MULTMATRIX PROC 
 
@@ -440,7 +540,7 @@ PRINTRES PROC
 ret
 PRINTRES ENDP
 
-; END OF CODE SEGMENT
+
 CODE ENDS
-; END OF PROGRAM. OBS: INCLUDES THE ENTRY OR THE FIRST PROCEDURE (i.e. “INICIO”)
+
 END INICIO

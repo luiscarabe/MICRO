@@ -4,12 +4,11 @@
 ;**************************************************************************
 ; DATA SEGMENT DEFINITION
 DATOS SEGMENT
-computation db "Computation: ", 13, 10, "     | P1 | P2 | D1 | P4 | D2 | D3 | D4  ", 13, 10, "Word | ", '$'
-
 askuser db "Porfavor introduzca un caracter:", 13, 10, '$'
-character dw 2, 3 dup(0)
+character db 2, 2, 3 dup(31h)
 endline db 13, 10, '$'
-result dw 4 dup(0)
+result db 4 dup(30h), '$'
+errormessage db "Error: datos introducidos incorrectos", 13, 10, '$'
 DATOS ENDS			  
 ;**************************************************************************
 ; STACK SEGMENT DEFINITION
@@ -36,29 +35,36 @@ MOV ES, AX
 MOV SP, 64 ; LOAD THE STACK POINTER WITH THE HIGHEST VALUE
 
 ; PROGRAM START
-CALL GETASCIIFROMUSER
-MOV AX, character[2]
-SUB AX, 30h
-MUL 10
-MOV DX, character[3]
-SUB DX, 30h
-ADD AX, DX
+start: CALL GETASCIIFROMUSER
+MOV AL, character[1]
+CMP AL, 0
+JZ ERRORMSG
+CMP AL, 1
+JZ ONECHAR
+CALL TWOCHAR
 
 ;; Comprobar errores
 
-MOV SI, 0
+division: CMP AL, 15
+JG ERRORMSG
+MOV CL, 0
+CMP CL, AL
+JG ERRORMSG
+MOV SI, 3
              	MOV CL, 2
-divisionloop:	DIV CL
+				
+divisionloop:	MOV AH, 0
+				MOV DX, 0
+				DIV CL
 				MOV DL, AH
+				MOV AH, 0
 				MOV DH, 0h
 				ADD DX, 30h
-				MOV result[SI], DX
-				MOV DX, 0
-				INC SI
-				CMP AX, 0
+				MOV result[SI], DL
+				SUB SI, 1
+				CMP AL, 0
 				JNZ divisionloop
 				
-MOV result[SI], '$'
 MOV AH, 09h
 MOV DL, OFFSET endline
 INT 21h
@@ -68,7 +74,32 @@ MOV AX, 4C00h
 INT 21h
 
 INICIO ENDP
-		
+
+ONECHAR PROC
+ONECHAR: MOV AL, character[2]
+	SUB AL, 30h
+	JMP division
+ONECHAR ENDP
+
+TWOCHAR PROC
+	MOV AL, character[2]
+	SUB AL, 30h
+	MOV AH, 0
+	MOV CL, 10
+	MUL CL
+	MOV DL, character[3]
+	SUB DL, 30h
+	ADD AL, DL
+	JMP division
+TWOCHAR ENDP
+
+ERRORMSG PROC
+ERRORMSG:	MOV DX, OFFSET errormessage
+	MOV AH, 09h
+	INT 21h
+	JMP start
+ERRORMSG ENDP
+	
 GETASCIIFROMUSER PROC
 	MOV DX, OFFSET askuser
 	MOV AH, 09h
@@ -76,6 +107,7 @@ GETASCIIFROMUSER PROC
 	
 	MOV AH, 0AH
 	MOV DX, OFFSET character
+	MOV character[0], 3
 	INT 21h
 ret
 GETASCIIFROMUSER ENDP
