@@ -1,46 +1,55 @@
+PRAC3A SEGMENT BYTE PUBLIC 'CODE'
 PUBLIC _checkSecretNumber
+ASSUME CS: PRAC3A
 _checkSecretNumber PROC FAR
-    MOV AX, [BP+6]
-    MOV DX, [BP+8]
-    MOV ES, DX
-    MOV CX, 1
+	PUSH BP
+	MOV BP, SP
+    LES BX, [BP+6]
+    MOV DI, 1
     MOV SI, 0
-loop:   MOV BX, [ES:AX][SI]
-        innerloop: CMP BX, [ES:AX][CX]
+loop:   MOV AX, [ES:BX][SI]
+        innerloop: CMP AX, [ES:BX][DI]
                    JZ repeated
-                   INC CX
-                   CMP CX, 4
+                   INC DI
+                   CMP DI, 4
                    JNZ innerloop
         INC SI
-        MOV CX, SI
-        INC CX
+        MOV DI, SI
+        INC DI
         CMP SI, 3
         JNZ loop
+		POP BP
+		MOV AX, 0
+		ret 
 
-ret 0
-
-repeated: ret 1
+repeated: POP BP
+		  MOV AX, 1
+		  ret 
 
 _checkSecretNumber ENDP
 
 
 PUBLIC _fillUpAttempt
-_fillUpAttempt PROC
+_fillUpAttempt PROC FAR
+	PUSH BP
+	MOV BP, SP
     MOV AX, [BP+6]
-    MOV DX, [BP+8]
-    MOV ES, DX
-    MOV BX, [BP+10]
-    ES:BX
+    LES BX, [BP+10]
+    
     
     MOV CL, 10
     MOV SI, 3
-loop:   MOV DX, 0
+loop1:   MOV DX, 0
         MOV AH, 0
         DIV CL
         MOV [ES:BX][SI], AL
         MOV AL, AH
         DEC SI
-        JNZ loop
+        JNZ loop1
+	
+	POP BP
     ret
 
 _fillUpAttempt ENDP
+PRAC3A ENDS
+END
