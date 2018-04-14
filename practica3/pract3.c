@@ -19,10 +19,11 @@ int main( void )
 	srand((unsigned) time(&t));
 	do {
 		for (i=0; i<4; i++)
-		secretNum[i] = rand() % 10;
+			secretNum[i] = rand() % 10;
 		repeated = checkSecretNumber(secretNum);
 	} while (repeated == TRUE);
 	numAttempts = 0;
+	printf("Secret NUMMM: %u%u%u%u\n", secretNum[0], secretNum[1], secretNum[2], secretNum[3]);
 	do {
 		numAttempts++;
 		do

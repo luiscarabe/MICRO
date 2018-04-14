@@ -3,9 +3,12 @@ PUBLIC _computeMatches
 ASSUME CS: PRAC3B
 _computeMatches PROC FAR
 	PUSH BP
+	MOV BP, SP
 	PUSH ES
 	PUSH DS
-	MOV BP, SP
+	PUSH BX
+	PUSH SI
+	PUSH CX
     LES AX, [BP+6] ; es - seg de secretNum ax - off de secretNum
 	LDS BX, [BP+10]
 	
@@ -22,12 +25,13 @@ compute:
 			INC SI
 			CMP SI,4
 			JNZ compute
-
-				
+	MOV AX, CX ; value returned through AX since function is int
+	POP CX
+	POP SI
+	POP BX
 	POP DS
 	POP ES
 	POP BP
-	MOV AX, CX ; value returned through AX since function is int
 	RET
 	
 _computeMatches ENDP
@@ -36,8 +40,13 @@ PUBLIC _computeSemiMatches
 
 _computeSemiMatches PROC FAR
 	PUSH BP
-	PUSH DS
 	MOV BP, SP
+	PUSH DS
+	PUSH BX
+	PUSH DX
+	PUSH SI
+	PUSH CX
+	PUSH DI
     LES BX, [BP+6]
     LDS DX, [BP+10]
     MOV SI, 0
@@ -60,12 +69,15 @@ loop:	MOV DI, 0
 	CMP SI, 4
 	JNZ loop
 				
-	
-	
+	MOV AX, CX
+	POP DI
+	POP CX
+	POP SI
+	POP DX
+	POP BX
 	POP DS
 	POP BP
 	
-MOV AX, CX
 ret 
 
 bingo:	INC CX
