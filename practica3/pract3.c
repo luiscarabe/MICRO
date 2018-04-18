@@ -23,7 +23,7 @@ int main( void )
 		repeated = checkSecretNumber(secretNum);
 	} while (repeated == TRUE);
 	numAttempts = 0;
-	printf("Secret NUMMM: %u%u%u%u\n", secretNum[0], secretNum[1], secretNum[2], secretNum[3]);
+	//printf("Secret num: %u%u%u%u\n", secretNum[0], secretNum[1], secretNum[2], secretNum[3]);
 	do {
 		numAttempts++;
 		do
