@@ -11,3 +11,9 @@ pract3a.obj: pract3a.asm
 
 pract3b.obj: pract3b.asm
 	tasm /zi /ml pract3b,,pract3b
+	
+	
+clean:
+	del *.exe 
+	del *.obj 
+	del *.map
