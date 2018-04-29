@@ -3,61 +3,64 @@ ASSUME cs : code
 ORG 256
 start: jmp choice
 ; Global variables
-groupInfo db "Juan Riera and Luis Carabe, team number: 2 ", '$'
+groupInfo db "Juan Riera and Luis Carabe, team number: 2 ", 10, '$'
 installInfo db "Installed (Y/n): ", '$'
+notOursInfo db 13,10, "Something is installed, but not our driver.",'$'
 
-wrongParams db "Wrong params, you can only use /I or /U", '$'
-overwrite db "A different driver is present, do you want to overwrite? (Y/n)", '$'
-ans db 2 dup(?)
+wrongParams db "Wrong params, you can only use /I or /U", 13, 10,'$'
+overwrite db 13,10,"A different driver is present, do you want to overwrite? (Y/n):", '$'
+ans db 3 dup(?)
 
 isr PROC FAR ; Interrupt service routine
-		push ax si bx; Save modified registers
+		push ax si bx bp; Save modified registers
+		mov bp, dx
 		mov si, 0
-		cmp 12h, ah
+		cmp ah, 12h
 		jz encrypt
 		; Control de errores si Ah no es 12 o 13??
 		jmp decrypt
 		; The strings shall be pointed by DS:DX and they shall end with $
-	encrypt: 
-		mov bx, ds:dx[si]
+	encrypt:
+		mov bx, ds:[bp][si]
 		cmp bx, '$'
 		jz printer
 		cmp bx, 61h ; si el codigo es menor que la a minuscula
 		jb no_change ; letra < a
-		cmp 7Ah, bx ;
-		ja no_change ; letra > z
+		cmp bx, 7Ah ;
+		jbe no_change ; letra > z
 		add bx, 5 ; sumamos 5
-		cmp 7Ah, bx ; si nos hemos pasado de la z al sumar
-		jbe no_mod
-		dec bx, 26 ; restamos el num de letras
+		cmp bx, 7Ah ; si nos hemos pasado de la z al sumar
+		ja no_mod
+		sub bx, 26 ; restamos el num de letras
 	no_mod:
-		mov ds:dx[si], bx ; guardamos el encriptado
+		mov ds:[bp][si], bx ; guardamos el encriptado
 	no_change:
-		add si, 2
+		inc si
 		jmp encrypt
 		
 	decrypt:
-		mov bx, ds:dx[si]
+		mov bx, ds:[bp][si]
 		cmp bx, '$'
 		jz printer
 		cmp bx, 61h
 		jb no_change2 ; letra < a
-		cmp 7Ah, bx
-		ja no_change2 ; letra > z
-		dec bx, 5 ; restamos 5
+		cmp bx, 7Ah
+		jbe no_change2 ; letra > z
+		sub bx, 5 ; restamos 5
 		cmp bx, 61h
 		jae no_mod2 ;no nos hemos pasado de la a al restar
 		add bx, 26 ; sumamos el num de letras
 	no_mod2:
-		mov ds:dx[si], bx
+		mov ds:[bp][si], bx
 	no_change2:
 		add si, 2
 		jmp decrypt
 		
-	printer:	mov ah, 9h
-				int 21h
+	printer:	
+		mov ah, 9h
+		int 21h
 		
-		pop bx si ax
+		pop bp bx si ax
 		iret
 isr ENDP
 
@@ -95,7 +98,8 @@ uninstaller PROC ; Uninstall ISR of INT 55h
 uninstaller ENDP
 
 get_info PROC
-		push dx ax es bx
+		push dx ax es bx cx
+		mov cx, 0
 		mov dx, OFFSET groupInfo
 		mov ah, 9h
 		int 21h
@@ -105,66 +109,11 @@ get_info PROC
 		;Miramos si esta instalado viendo si:
 		;Interrupt vector different from zero.
 		;First bytes of the service routine belong to the program that is to be uninstalled
-		cmp ds:[55h*4], 0
-		jnz not_installed
-		cmp ds:[55h*4+2],0
-		jnz not_installed
-		mov ax, 0
-		mov es, ax
-		mov ax, OFFSET isr
-		mov bx, cs
-		cmp es:[55h*4], ax
-		jnz not_installed
-		cmp es:[ 55h*4+2 ], bx
-		jnz not_installed
-		mov ah, 2
-		mov dl, 'Y'
-		int 21h
-		jmp end_
-	not_installed:
-		mov ah,2
-		mov dl, 'n'
-		int 21h
-	end_:
-		pop bx es ax dx
-		ret
-get_info ENDP
-
-choice PROC 
-	; VER SI ESTAMOS INSTALANDO, DESINSTALANDO, O SIMPLEMENTE PIDIENDO INFOR
-		push ax bx dx es
-		cmp 0, [80h]
-		jz info
-		cmp 03h, [80h] ; Comprobamos que hay 3 bytes de argumentos
-		jnz badArgs
-		cmp [81h], ' '
-		jnz badArgs
-		cmp [82h], '/'
-		jnz badArgs
-		cmp [83h], 'I'
-		jz install
-		cmp [83h], 'U'
-		jz uninstall
-		
-	badArgs:
-		mov dx, OFFSET wrongParams
-		mov ah, 9h
-		int 21h
-		
-	info: 
-		call get_info
-		jmp end_
-
-	;Miramos si esta instalado viendo si:
-	;Interrupt vector different from zero.
-	;First bytes of the service routine belong to the program that is to be uninstalled
-	install: 
-		cmp ds:[55h*4], 0
+		mov es, cx
+		cmp es:[55h*4], cx
 		jnz not_zero
-		cmp ds:[55h*4+2],0
-		jnz not_zero
-		call installer
-		jmp end_
+		cmp es:[55h*4+2],cx
+		jz not_installed
 	not_zero:
 		mov ax, 0
 		mov es, ax
@@ -174,8 +123,73 @@ choice PROC
 		jnz not_ours
 		cmp es:[ 55h*4+2 ], bx
 		jnz not_ours
+		mov ah, 2
+		mov dl, 'Y'
+		int 21h
 		jmp end_
 	not_ours:
+		mov ah, 9h
+		mov dx, OFFSET notOursInfo
+		int 21h
+		jmp end_
+	not_installed:
+		mov ah,2
+		mov dl, 'n'
+		int 21h
+	end_:
+		pop cx bx es ax dx
+		ret
+get_info ENDP
+
+choice PROC 
+;ES UN PROGRAMA NORMAL? (NO HACER PUSH/POP + TERMINAR CON INT)????
+	; VER SI ESTAMOS INSTALANDO, DESINSTALANDO, O SIMPLEMENTE PIDIENDO INFOR
+		mov cx, 0
+		cmp BYTE PTR ds:[80h], 0
+		jz info
+		cmp BYTE PTR ds:[80h], 03h ; Comprobamos que hay 3 bytes de argumentos
+		jnz badArgs
+		cmp BYTE PTR ds:[81h], ' '
+		jnz badArgs
+		cmp BYTE PTR ds:[82h], '/'
+		jnz badArgs
+		cmp BYTE PTR ds:[83h], 'I'
+		jz install
+		cmp BYTE PTR ds:[83h], 'U'
+		jz uninstall
+		
+	badArgs:
+		mov dx, OFFSET wrongParams
+		mov ah, 9h
+		int 21h
+		jmp end1
+		
+	info: 
+		call get_info
+		jmp end1
+
+	;Miramos si esta instalado viendo si:
+	;Interrupt vector different from zero.
+	;First bytes of the service routine belong to the program that is to be uninstalled
+	install: 
+		mov es, cx
+		cmp es:[55h*4], cx
+		jnz not_zero2
+		cmp es:[55h*4+2],cx
+		jnz not_zero2
+		call installer
+		jmp end1
+	not_zero2:
+		mov ax, 0
+		mov es, ax
+		mov ax, OFFSET isr
+		mov bx, cs
+		cmp es:[55h*4], ax
+		jnz not_ours2
+		cmp es:[ 55h*4+2 ], bx
+		jnz not_ours2
+		jmp end1
+	not_ours2:
 		; Si no es nuestro preguntamos si queremos sobreescribir
 		mov dx, OFFSET overwrite
 		mov ah, 9h
@@ -183,32 +197,32 @@ choice PROC
 		
 		mov ah,0Ah ; Function 0Ah Reading from keyboard 
 		mov dx, OFFSET ans  ;Memory  area  allocation  pointing  to  memory  tag ans 
-		mov ans[0],1 ;Maximum number of characters to capture = 1
+		mov ans[0],2 ;Maximum number of characters to capture = 1
 		int 21h
 			
-		cmp ans[1], 'Y'
-		jnz end_
+		cmp ans[2], 'Y'
+		jz call_install
+		cmp ans[2], 'n'
+		jz end1
+		jmp not_ours2
+		
+	call_install:
 		call installer
-		jmp end_
+		jmp end1
 		
 	uninstall:
-		cmp ds:[55h*4], 0
-		jnz end_
-		cmp ds:[55h*4+2],0
-		jnz end_
-		mov ax, 0
-		mov es, ax
-		mov ax, OFFSET isr
-		mov bx, cs
-		cmp es:[55h*4], ax
-		jnz end_
-		cmp es:[ 55h*4+2 ], bx
-		jnz end_
+		mov es, cx
+		cmp es:[55h*4], cx
+		jnz call_uninstall
+		cmp es:[55h*4+2],cx
+		jz end1
+		;Si hay uno instalado y no es nuestro nos la pela un poco
+	call_uninstall:
 		call uninstaller
 
-	end_:
-		pop es dx bx ax
-		ret
+	end1:
+		mov ax, 4C00h
+		int 21h
 choice ENDP
 	
 code ENDS
