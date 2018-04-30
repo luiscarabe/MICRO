@@ -6,61 +6,61 @@ start: jmp choice
 groupInfo db "Juan Riera and Luis Carabe, team number: 2 ", 10, '$'
 installInfo db "Installed (Y/n): ", '$'
 notOursInfo db 13,10, "Something is installed, but not our driver.",'$'
-
 wrongParams db "Wrong params, you can only use /I or /U", 13, 10,'$'
 overwrite db 13,10,"A different driver is present, do you want to overwrite? (Y/n):", '$'
 ans db 3 dup(?)
 
 isr PROC FAR ; Interrupt service routine
-		push ax si bx bp; Save modified registers
-		mov bp, dx
-		mov si, 0
+		push ax bx si; Save modified registers
+		mov si, dx
 		cmp ah, 12h
 		jz encrypt
 		; Control de errores si Ah no es 12 o 13??
-		jmp decrypt
+		cmp ah, 13h
+		jz decrypt
+		jmp inter_end
 		; The strings shall be pointed by DS:DX and they shall end with $
 	encrypt:
-		mov bx, ds:[bp][si]
-		cmp bx, '$'
+		mov bl, [si]
+		cmp bl, '$'
 		jz printer
-		cmp bx, 61h ; si el codigo es menor que la a minuscula
+		cmp bl, 61h ; si el codigo es menor que la a minuscula
 		jb no_change ; letra < a
-		cmp bx, 7Ah ;
-		jbe no_change ; letra > z
-		add bx, 5 ; sumamos 5
-		cmp bx, 7Ah ; si nos hemos pasado de la z al sumar
-		ja no_mod
-		sub bx, 26 ; restamos el num de letras
+		cmp bl, 7Ah ;
+		ja no_change ; letra > z
+		add bl, 5 ; sumamos 5
+		cmp bl, 7Ah ; si nos hemos pasado de la z al sumar
+		jbe no_mod
+		sub bl, 26 ; restamos el num de letras
 	no_mod:
-		mov ds:[bp][si], bx ; guardamos el encriptado
+		mov [si], bl ; guardamos el encriptado
 	no_change:
 		inc si
 		jmp encrypt
 		
 	decrypt:
-		mov bx, ds:[bp][si]
-		cmp bx, '$'
+		mov bl, [si]
+		cmp bl, '$'
 		jz printer
-		cmp bx, 61h
+		cmp bl, 61h
 		jb no_change2 ; letra < a
-		cmp bx, 7Ah
-		jbe no_change2 ; letra > z
-		sub bx, 5 ; restamos 5
-		cmp bx, 61h
+		cmp bl, 7Ah
+		ja no_change2 ; letra > z
+		sub bl, 5 ; restamos 5
+		cmp bl, 61h
 		jae no_mod2 ;no nos hemos pasado de la a al restar
-		add bx, 26 ; sumamos el num de letras
+		add bl, 26 ; sumamos el num de letras
 	no_mod2:
-		mov ds:[bp][si], bx
+		mov [si], bl
 	no_change2:
-		add si, 2
+		inc si
 		jmp decrypt
 		
 	printer:	
 		mov ah, 9h
-		int 21h
-		
-		pop bp bx si ax
+		int 21h	
+	inter_end:
+		pop si bx ax
 		iret
 isr ENDP
 
@@ -97,8 +97,39 @@ uninstaller PROC ; Uninstall ISR of INT 55h
 		ret
 uninstaller ENDP
 
+checkDriver PROC
+		push es ax bp si bx 
+		mov es, cx 
+		cmp es:[55h*4], cx
+		jnz something
+		cmp es:[55h*4+2],cx
+		jz nothing_there
+	something:
+		mov ax, 0
+		mov es, ax
+		mov bp, es:[55h*4]
+		mov es, es:[55h*4+2]
+		mov si, OFFSET isr
+		mov bx, [si]
+		cmp es:[bp], bx
+		jnz not_our_driver
+		mov bx, [si+2]
+		cmp es:[bp+2], bx
+		jnz not_our_driver
+		mov cx, 1
+		jmp return
+	not_our_driver:
+		mov cx, 2
+		jmp return
+	nothing_there:
+		mov cx, 0
+	return:
+		pop bx si bp ax es
+		ret
+checkDriver ENDP
+
 get_info PROC
-		push dx ax es bx cx
+		push cx dx ax 
 		mov cx, 0
 		mov dx, OFFSET groupInfo
 		mov ah, 9h
@@ -109,20 +140,13 @@ get_info PROC
 		;Miramos si esta instalado viendo si:
 		;Interrupt vector different from zero.
 		;First bytes of the service routine belong to the program that is to be uninstalled
-		mov es, cx
-		cmp es:[55h*4], cx
-		jnz not_zero
-		cmp es:[55h*4+2],cx
+		call checkDriver
+		cmp cx, 0 ;Not installed
 		jz not_installed
-	not_zero:
-		mov ax, 0
-		mov es, ax
-		mov ax, OFFSET isr
-		mov bx, cs
-		cmp es:[55h*4], ax
-		jnz not_ours
-		cmp es:[ 55h*4+2 ], bx
-		jnz not_ours
+		cmp cx, 1 ; Ours
+		jz ours
+		jmp not_ours
+	ours:	
 		mov ah, 2
 		mov dl, 'Y'
 		int 21h
@@ -137,7 +161,7 @@ get_info PROC
 		mov dl, 'n'
 		int 21h
 	end_:
-		pop cx bx es ax dx
+		pop ax dx cx
 		ret
 get_info ENDP
 
@@ -172,24 +196,13 @@ choice PROC
 	;Interrupt vector different from zero.
 	;First bytes of the service routine belong to the program that is to be uninstalled
 	install: 
-		mov es, cx
-		cmp es:[55h*4], cx
-		jnz not_zero2
-		cmp es:[55h*4+2],cx
-		jnz not_zero2
-		call installer
-		jmp end1
-	not_zero2:
-		mov ax, 0
-		mov es, ax
-		mov ax, OFFSET isr
-		mov bx, cs
-		cmp es:[55h*4], ax
-		jnz not_ours2
-		cmp es:[ 55h*4+2 ], bx
-		jnz not_ours2
-		jmp end1
-	not_ours2:
+		call checkDriver
+		cmp cx, 0 ;Not installed
+		jz call_install
+		cmp cx, 1 ; Ours
+		jz end1
+		
+	not_ours1:
 		; Si no es nuestro preguntamos si queremos sobreescribir
 		mov dx, OFFSET overwrite
 		mov ah, 9h
@@ -204,7 +217,7 @@ choice PROC
 		jz call_install
 		cmp ans[2], 'n'
 		jz end1
-		jmp not_ours2
+		jmp not_ours1
 		
 	call_install:
 		call installer
