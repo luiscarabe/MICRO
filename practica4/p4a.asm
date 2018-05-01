@@ -99,6 +99,7 @@ uninstaller ENDP
 
 checkDriver PROC
 		push es ax bp si bx 
+		mov cx, 0
 		mov es, cx 
 		cmp es:[55h*4], cx
 		jnz something
