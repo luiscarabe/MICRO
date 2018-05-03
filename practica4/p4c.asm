@@ -5,16 +5,19 @@
 ;**************************************************************************
 ; DATA SEGMENT DEFINITION
 DATOS SEGMENT
-info DB 13,10,"Do you want to encrypt (cod), decrypt (dec) or quit (quit)?", 13,10,'$'
-enterString DB 13,10,"Please, enter a string (30 char max):",13,10,'$'
-endline DB 13, 10, '$'
-inputString DB ?,?,31 dup(0)
-codString DB "cod"
-decString DB "dec"
-quitString DB "quit"
-encryptingModeAct DB "Encrypting mode", 13, 10, '$'
-decryptingModeAct DB "Decrypting mode", 13, 10, '$'
-debugString db "hey q paxa", 13,  10, '$'
+info DB 13,10,"Do you want to encrypt (cod), decrypt (dec) or quit (quit)?", 13,10,'$' ; We will print this
+													; string at the start of the program
+endline DB 13, 10, '$' ; This string is printed when we need an end of line
+inputString DB ?,?,31 dup(0) ; Here we will store whatever the user types, and
+						; also the encrypted/decrypted string before we print it
+codString DB "cod"	; We will use this variable to check if the input string is 'enc'
+decString DB "dec" ; We will use this variable to check if the input string is 'dec'
+quitString DB "quit" ; We will use this variable to check if the input string is 'quit'
+encryptingModeAct DB "Encrypting mode", 13, 10, '$' ; We will print this string to inform the user
+												; that they has changed the mode to encrypting
+decryptingModeAct DB "Decrypting mode", 13, 10, '$'; We will print this string to inform the user
+												; that they has changed the mode to decrypting
+flagNotPrint DB 0 ; This flag is used to print half of the times so that we print in 1 hz
 mode DB (0) ; Variable that stores if we are encrypting (0) or decrypting (1)
 DATOS ENDS			  
 ;**************************************************************************
@@ -41,6 +44,9 @@ rtc_isr PROC
 	; Check if the c register is the correct one
 	test al, 01000000b ; Check it is a periodic interrupt
 	jz finish ; If not end the interrupt
+	cmp flagNotPrint, 1 ; We check if we don't have to print (we want to print half of the times)
+	jz notPrint ; If we don't have to print we put the flagNotPrint variable to 0 and end
+	mov flagNotPrint, 1 ; We have to print, so the next time we won't print
 	mov ah, 2h ; Prepare the print function
 	mov dl, inputString[di] ; Get the ascii char
 	int 21h ; Print it
@@ -58,7 +64,9 @@ rtc_isr PROC
     out 70h, al ; Enable the 0Bh register
     mov al, ah	
     out 71h, al ; Write the 0Bh register
-
+	jmp finish ; We don't want to clear the flagNotPrintVariable, we want it to be 1
+notPrint:
+	mov flagNotPrint, 0
 finish:
 	mov al, 20h ; Load EOI
 	out 20h, al ; Send it to the master PIC
