@@ -61,17 +61,18 @@ isr PROC FAR ; Interrupt service routine
 		iret
 isr ENDP
 
+
 installer PROC
 		mov ax, 0
 		mov es, ax
 		mov ax, OFFSET isr
-		mov cx, OFFSET rtc_isr
+
 		mov bx, cs
 		cli
 		mov es:[ 55h*4 ], ax
 		mov es:[ 55h*4+2 ], bx
-		mov es:[70h*4], cx
-		mov es:[70h*4+2], bx
+
+
 		sti
 		mov dx, OFFSET installer
 		int 27h ; Terminate and stay resident
@@ -238,41 +239,6 @@ choice PROC
 		mov ax, 4C00h
 		int 21h
 choice ENDP
-
-rtc_isr PROC
-	sti	
-	push ax, bx
-	mov al, 0Ch
-	out 70h, al
-	in al, 71h
-	; TODO comparar el registro c
-	; [Dx+DI] should contain the ascii to print
-	mov bx, dx
-	mov ah, 2h 
-	mov dl, [bx+di]
-	int 21h
-
-	inc di
-	cmp [bx+di], '$'
-	jnz finish
-	; Make it stop interrupts
-	mov al, 0Bh
-    out 70h, al ; Enable 0Bh register
-    in al, 71h ; Read the 0Bh register
-    mov ah, al
-    and ah, 10111111b ; Set the PIE bit
-    mov al, 0Bh
-    out 70h, al ; Enable the 0Bh register
-    mov al, ah
-    out 71h, al ; Write the 0Bh register
-
-finish:
-	mov al, 20h
-	out 20h, al
-	out 0A0h, al
- 	pop bx, ax
-	iret
-
-
 code ENDS
+
 END start

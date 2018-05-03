@@ -1,4 +1,4 @@
-all: p4a.com
+all: p4a.com p4a2.com p4c.exe p4b.exe
 
 p4a.com: p4a.obj
     tlink /v /t p4a
@@ -6,6 +6,24 @@ p4a.com: p4a.obj
 p4a.obj: p4a.asm
     tasm /zi p4a.asm
 
+p4a2.com: p4a2.obj
+    tlink /v /t p4a2
+
+p4a2.obj: p4a2.asm
+    tasm /zi p4a2.asm
+	
+p4c.exe: p4c.obj
+    tlink /v p4c
+
+p4c.obj: p4c.asm
+    tasm /zi p4c.asm
+	
+p4b.exe: p4b.obj
+    tlink /v p4b
+
+p4b.obj: p4b.asm
+    tasm /zi p4b.asm
+	
 clean:
 	del *.exe 
 	del *.obj 
