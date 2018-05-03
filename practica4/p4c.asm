@@ -35,38 +35,37 @@ rtc_isr PROC
 	sti	
 	push ax
 	push bx
-	mov al, 0Ch
-	out 70h, al
-	in al, 71h
+	mov al, 0Ch ; We want the c register
+	out 70h, al ; Tell the rtc what we want
+	in al, 71h ; Get it's answer
 	; Check if the c register is the correct one
-	test al, 11110000b
-	jz finish
-	; [Dx+DI] should contain the ascii to print
-	mov ah, 2h 
-	mov dl, inputString[di]
-	int 21h
+	test al, 01000000b ; Check it is a periodic interrupt
+	jz finish ; If not end the interrupt
+	mov ah, 2h ; Prepare the print function
+	mov dl, inputString[di] ; Get the ascii char
+	int 21h ; Print it
 
-	inc di
-	cmp byte ptr inputString[di], '$'
-	jnz finish
-	; Make it stop interrupts
-	mov al, 0Bh
+	inc di ; Increment the indexer
+	cmp byte ptr inputString[di], '$' ; Have we reached the end of the string?
+	jnz finish	; If we haven't end the interrupt
+	; If we have, make it stop the interrupts
+	mov al, 0Bh ; Load register b
     out 70h, al ; Enable 0Bh register
     in al, 71h ; Read the 0Bh register
     mov ah, al
-    and ah, 10111111b ; Set the PIE bit
-    mov al, 0Bh
+    and ah, 10111111b ; Set the PIE bit to 0
+    mov al, 0Bh ; Write the b register back
     out 70h, al ; Enable the 0Bh register
-    mov al, ah
+    mov al, ah	
     out 71h, al ; Write the 0Bh register
 
 finish:
-	mov al, 20h
-	out 20h, al
-	out 0A0h, al
+	mov al, 20h ; Load EOI
+	out 20h, al ; Send it to the master PIC
+	out 0A0h, al ; Send it to the slave PIC
  	pop bx
 	pop ax
-	iret
+	iret ; End the interrupt
 rtc_isr endp
 
 confRTC PROC FAR
@@ -74,18 +73,18 @@ confRTC PROC FAR
 	push cx
 	push ax
 	cli
-	mov ax, 0
-	mov es, ax
-	mov cx, OFFSET rtc_isr
+	mov ax, 0 ; Load a 0 in ax
+	mov es, ax ; and put it in es to install the interrupt
+	mov cx, OFFSET rtc_isr ; Get the offset od the isr
 	
-	mov es:[70h*4], cx
-	mov bx, cs
-	mov es:[70h*4+2], bx
-    mov al, 0Ah
+	mov es:[70h*4], cx ; Store the offset in 0:[70h*4]
+	mov bx, cs ; Store the segment
+	mov es:[70h*4+2], bx ; in 0:[70h*4+2]
+  
     ; SET the frequency
-    
+    mov al, 0Ah 
 	out 70h, al ;Enable 0Ah register
-    mov al, 00101111b ; DV=001b, RS=0111b 
+    mov al, 00101111b ; (DV=010b, RS=1111b) = 2 hz 
     out 71h, al ; Write 0Ah register
 	mov al, 0Bh
     out 70h, al ; Enable 0Bh register
@@ -136,7 +135,7 @@ INICIO PROC
     CALL confRTC
 
 	MOV DX, OFFSET info
-	MOV AH, 9H
+	MOV AH, 9H ; Print the info string
 	INT 21H
 
 question:	
@@ -152,13 +151,15 @@ question:
         MOV SI, 0 ; Si will be used as a pointer in the
                 ;string
         ; We will now check if the string is 'enc'
-checkEnc: MOV al, inputString[SI+2] 
+checkEnc: MOV al, inputString[SI+2] ; We get each character, we are not interested 									; in the first two (because they are metavalues  									; of the string, we want the string itself) ; We get each character, we are not interested
+									; in the first two (because they are metavalues 
+									; of the string, we want the string itself)
         CMP al, codString[SI] ; Check if the characters are equal
 		JNZ checkDecInit ; If they are not we leave and check if 
                         ; the string is 'dec'
-        INC SI          ; else, keep checking 
-        CMP SI, 3
-        JL checkEnc
+        INC SI ; Increment the indexer          ; else, keep checking 
+        CMP SI, 3 ; Check if we have reached the end of 'enc'
+        JL checkEnc ; If we haven't we jump back to the start of the loop
 
         mov mode, 0 ; If we reach this point the string is
                     ; 'enc' and therefore we change the mode
@@ -168,66 +169,78 @@ checkEnc: MOV al, inputString[SI+2]
         JMP question
 
 checkDecInit: MOV SI, 0
-checkDec: MOV al, inputString[SI+2]
-        CMP al, decString[SI]
-		JNZ checkQuitInit
-        INC SI
-        CMP SI, 3
-        JL checkDec
-        MOV DX, OFFSET decryptingModeAct
-	    MOV AH, 9H
+checkDec: MOV al, inputString[SI+2] ; We get each character, we are not interested 
+									; in the first two (because they are metavalues  
+									; of the string, we want the string itself)
+        CMP al, decString[SI] ; Check if the characters are equals in both strings
+		JNZ checkQuitInit ; If they are not jump to check if the string is 'quit'
+        INC SI ; Increment the indexer
+        CMP SI, 3 ; Check if we have reached the end of 'dec'
+        JL checkDec ; If we haven't, jump to the start of the loop
+		
+		; If we reach this point the string is 'dec' 
+        MOV DX, OFFSET decryptingModeAct ; So we inform the user 
+	    MOV AH, 9H ; printing the decryptModeAct string
 	    INT 21H
-        mov mode, 1
-        JMP question
+        mov mode, 1; If we reach this point the string is
+                    ; 'dec' and therefore we change the mode
+        JMP question ; Jump back to the start and ask for another string
 
 checkQuitInit: MOV SI, 0
-checkQuit: MOV al, inputString[SI+2]
-        CMP al, quitString[SI]
-		JNZ normalString
-        INC SI
-        CMP SI, 4
-        JL checkQuit
+checkQuit: MOV al, inputString[SI+2] ; We get each character, we are not interested 
+									; in the first two (because they are metavalues
+									; of the string, we want the string itself)
+        CMP al, quitString[SI] ; Check if the characters are equalsin both strings
+		JNZ normalString ; If they are not, we encrypt/decrypt the string, because
+						; it is not 'enc', 'dec' or 'quit'
+        INC SI ; Increment the indexer
+        CMP SI, 4 ; Check if we have reached the end of 'quit'
+        JL checkQuit ; If we haven't we jump back to the start of the loop
+				; If we reach this point the string is
+        JMP quit   ; 'quit' and therefore we end the program
+        
 
-        JMP quit
-
-normalString:
+normalString: ; We jump here if the string is not 'dec' or 'enc' or 'quit'
     MOV BL, inputString[1] ;Number of chars read
-	MOV BH, 0
+	MOV BH, 0 ; Expand bl to the whole bx
 	ADD BL, 2 ; skip inputString[0]/[1]
-	MOV inputString[BX], '$'
+	MOV inputString[BX], '$' ; Add a line end to the end of the string
 
-    MOV DX, OFFSET endline
-	MOV AH, 9H
+    MOV DX, OFFSET endline ; Print an
+	MOV AH, 9H				; end of line
 	INT 21H
 
-    cmp mode, 1
-    JZ decrypt
+    cmp mode, 1 ; Check if we are decrypting
+    JZ decrypt ; If we are, jump to decrypt, if not continue
 
 	encrypt:
 
-		MOV DX, OFFSET inputString
-		ADD DX, 2
-		MOV AH, 12H
+		MOV DX, OFFSET inputString ; Load in DX the offset of inputString + 2
+		ADD DX, 2	; because it will be taken as argument by the int 55 function
+		MOV AH, 12H ; Call encrypt
 		INT 55H
 
-		JMP printer
+		JMP printer ; When the string has been encrypted it is stored in inputString,
+					; so we just print it
+
 	decrypt:
 	
-		MOV DX, OFFSET inputString
-		ADD DX, 2
-		MOV AH, 13H
+		MOV DX, OFFSET inputString; Load in DX the offset of inputString + 2
+		ADD DX, 2	; because it will be taken as argument by the int 55 function
+		MOV AH, 13H ; Call decrypt
 		INT 55H
 
-		JMP printer
+		JMP printer ; When the string has been decrypted it is stored in inputString,
+					; so we just print it
 
     printer:
-        mov di, 2
-		call activateRTC
+        mov di, 2 ; Start printing from the third byte (skip the metadata)
+		call activateRTC ; Activate the clock periodic signals
 	
-    waiter: cmp inputString[di], '$'
-        JNZ waiter
+    waiter: cmp inputString[di], '$' ; Wait in an infinite loop
+        JNZ waiter					; until que reach the end in '$'
 
-        JMP question
+        JMP question				; Jump back to get another string
     quit:
 		; PROGRAM END
 		MOV AX, 4C00H
